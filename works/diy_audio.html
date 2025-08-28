@@ -44,15 +44,17 @@
     <p style="text-align: justify"><img alt="" src="./finished-interface.jpg" style="width: 270px; height: auto;" /></p>
 
     <p>6/2025:<br>
-    one of the things i've wanted to do for a long time is to be able to control the knobs on my analog guitar pedals interactively via MIDI, so i built this MIDI-servo interface from scratch<br>
-    for this i'm using an <i>Arduino Mega</i>, an <i>Adafruit 16-channel Servo driver</i> to drive servo motors, <i>MaxMSP</i>, and 3D printing to build chassis that would let me fix the motors to the pedals</p>
+    one of the things i've wanted to do for a long time is to be able to control the knobs on my analog guitar pedals interactively via MIDI, so i built this MIDI-servo interface from scratch</p>
+
+    <p>for this i'm using an <i>Arduino Mega</i>, an <i>Adafruit 16-channel Servo driver</i> to drive servo motors, <i>MaxMSP</i>, and 3D printing to build chassis that would let me fix the motors to the pedals</p>
 
     <p>what follows is a breakdown of the build steps, with pictures and code...</p>
 
     <div class="gap-2"></div>
 
-    <p>first i needed a hub that would take in several expression pedals and several sustain pedals; i settled on making one that could house 4 exp and 4 sus<br>
-    i found the individual jacks and a metal box to host the jacks, and i started wiring the TRS and TS ends to my Arduino:
+    <p>first i needed a hub that would take in several expression pedals and several sustain pedals; i settled on making one that could house 4 exp and 4 sus</p>
+
+    <p>i found the individual jacks and a metal box to host the jacks, and i started wiring the TRS and TS ends to my Arduino:
     </p>
 
     <p style="text-align: justify"><img alt="" src="./hub_wiring.jpg" style="width: 270px; height: auto;" /><br>
@@ -201,12 +203,12 @@
     </code></pre>
     </p>
 
-    <p>a first version of the Max patch then reads the data outputed but Arduino through a shared serial port (portion on the right side of the image below), reinterprets this data as MIDI and reconfigures it as needed, before outputing it back to the serial port for Arduino to read it and send it to the servo motors (portion on the left side):</p>
+    <p>a first version of the Max patch then reads the data outputted by Arduino through a shared serial port (portion on the right side of the image below), reinterprets this data as MIDI and reconfigures it as needed, before outputting it back to the serial port for Arduino to read and send it to the servo motors (portion on the left side):</p>
 
     <p style="text-align: justify"><img alt="" src="./maxpat.jpg" style="width: 720px; height: auto;" /><br>
-    finished pedal hub</p>
+    maxpat that allows for live rerouting and scaling of data to be sent to motors</p>
 
-    <p>the last step missing was then to 3D design and print chassis for each motor that would be attached to a knob on each analog guitar pedal; here is the autocad 3D design before printing:</p>
+    <p>the last step missing was then to 3D design and print chassis for each motor that would be attached to a knob on each analog guitar pedal; here is the autocad 3D design of one of these before 3D printing:</p>
 
     <p style="text-align: justify"><video autoplay loop src="./autocad-pedal.mp4" style="width: 480px; height: auto;" /></p>
 
@@ -216,6 +218,8 @@
 
     <p style="text-align: justify"><img alt="" src="./finished_setup.jpeg" style="width: 720px; height: auto;" /><br><br>
     ✨✨✨</p>
+
+    <p>i'm currently developing an album using this system... more to come!</p>
 
     <div class="gap-2"></div>
 
