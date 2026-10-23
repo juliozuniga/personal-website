@@ -6,13 +6,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <!-- this is an online css library for making things mobile (resizing etc) -->
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
-  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/arduino-light.min.css">
-  <!-- this js script is just a prerequisite for running bootstrap -->
-  <script src="js/vendor/jquery.min.js"></script>
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
-  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
-  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/arduino.min.js"></script>
-  <script>hljs.initHighlightingOnLoad();</script>
+  <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/arduino-light.min.css">
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/arduino.min.js"></script>
+  <script>
+    hljs.initHighlightingOnLoad();
+  </script>
   <link href="../css/style.css" rel="stylesheet">
 </head>
 
@@ -388,12 +389,16 @@
 
     <p>since this resulted in unnecessary lags, i built a new patch that reads the data, but is mostly in charge of sending mapping commands to Arduino so i can reconfigure how the input data is distributed; Arduino drives the servos locally, removing the need to wait for Max for these commands</p>
 
-    <p style="text-align: justify"><img alt="" src="./maxpat.jpg" style="width: 720px; height: auto;" /><br>
+    <p style="text-align: justify"><img alt="" src="./Maxpatch-20261023.png" style="width: 480px; height: auto;" /><br>
     maxpat that allows for live rerouting and scaling of data to be sent to motors</p>
 
     <p>an additional feature that was important me was to have a way to 'exit' this system and enter a manual mode, where each motor can be controlled 1-to-1 using knobs on a MIDI controller – in other words, a way to access each guitar pedal knob directly, the way you would if none of this was between your hands and the guitar pedals</p>
 
-    <p style="text-align: right">write to me if you want the max patch!</p>
+    <div class="gap-2"></div>
+
+    <p style="text-align: right"><u>write to me if you want the max patch!</u></p>
+
+    <div class="gap-2"></div>
 
     <p>the last step was then to 3D design and print chassis for each motor that would be attached to a knob on each analog guitar pedal; here is the autocad 3D design of one of these before 3D printing:</p>
 
@@ -401,7 +406,7 @@
 
     <p>and the 3D printed chassis with servos mounted:</p>
 
-    <p style="text-align: justify"><video autoplay loop src="./finished-interface.jpg" style="width: 480px; height: auto;" /></p>
+    <p  style="text-align: justify"><img alt="" src="./finished-interface.jpg" style="width: 270px; height: auto;" /></p>
 
     <div class="gap-2"></div>
 
