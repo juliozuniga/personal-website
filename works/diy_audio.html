@@ -77,25 +77,6 @@
       #include <string.h>
       #include <stdlib.h>
 
-      /*
-        Arduino-local pedal-to-servo control with Max preset mapping.
-
-        MaxMSP responsibilities:
-          - Select the active source-to-servo mapping via presets.
-          - In manual mode, forward eight MIDI CC knob values to the Arduino.
-          - Send mapping frames:       <999,m0,m1,m2,m3,m4,m5,m6,m7>
-          - Send calibration frames:   <998,l1,h1,l2,h2,l3,h3,l4,h4>
-          - Send mode frames:           <997,0|1> (0=pedal mode, 1=manual mode)
-          - Send manual values frames: <996,v0,v1,v2,v3,v4,v5,v6,v7>
-          - Continue sending raw readings for all eight pedals to Max. Max uses only
-            pedals 5-8 (analog inputs 8, 10, 12, 14) for its on/off event logic;
-            those four inputs are not valid motor-mapping sources.
-
-        Mapping values 0..3 select the first four expression-pedal sources. Values
-        4..7 are reserved for Max-only on/off pedals and are rejected in mappings.
-        Value 8 means "leave this servo at its current position".
-      */
-
       Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
 
       #define SERVOMIN 100
@@ -106,26 +87,19 @@
       const uint8_t servos[NUM_CHANNELS] = {0, 1, 2, 3, 4, 5, 6, 7};
       const uint8_t pedals[NUM_CHANNELS] = {0, 2, 4, 6, 8, 10, 12, 14};
 
-      // These reproduce the ranges used by p input-scaling in the Max patch.
       const int PEDAL_ADC_MIN[NUM_CHANNELS] = {0, 0, 0, 0, 0, 0, 0, 0};
       const int PEDAL_ADC_MAX[NUM_CHANNELS] = {843, 843, 843, 843, 1023, 1023, 1023, 1023};
 
-      // Max's default preset1 mapping: servo 1 <- source 3, servo 3 <- source 2,
-      // servo 5 <- source 1. A mapping value of 8 leaves that servo unmapped.
       uint8_t servoSource[NUM_CHANNELS] = {2, 8, 1, 8, 0, 8, 8, 8};
 
-      // Expression-pedal calibration: each expression source has input and output
-      // endpoints, corresponding to the Max scale object's inlets. Max currently
-      // changes output endpoints; input endpoints default to 0 and 127.
       int exprInputMin[4]  = {0, 0, 0, 0};
       int exprInputMax[4]  = {127, 127, 127, 127};
-      int exprOutputMin[4] = {0, 0, 88, 0}; // p INIT sets expped3lowoutputval to 88
+      int exprOutputMin[4] = {0, 0, 88, 0};
       int exprOutputMax[4] = {127, 127, 127, 127};
 
-      // An 8-sample rolling average, sampled every 2 ms (~16 ms window).
       const uint8_t AVERAGE_SAMPLES = 8;
       const unsigned long SAMPLE_INTERVAL_MS = 2;
-      const unsigned long SERVO_UPDATE_INTERVAL_MS = 20; // 50 Hz
+      const unsigned long SERVO_UPDATE_INTERVAL_MS = 20;
       const unsigned long SERIAL_REPORT_INTERVAL_MS = 20;
       const int SERVO_DEADBAND = 2;
 
@@ -134,11 +108,9 @@
       uint8_t historyIndex = 0;
       int rawPedalValues[NUM_CHANNELS];
       int filteredPedalValues[NUM_CHANNELS];
-      int sourceValues[NUM_CHANNELS]; // normalized/calibrated source values, 0..127
+      int sourceValues[NUM_CHANNELS];
       int lastServoValues[NUM_CHANNELS];
 
-      // Manual mode bypasses pedal-source mapping. Max forwards MIDI CC values
-      // (0..127) for direct one-knob-to-one-servo control.
       bool manualMode = false;
       int manualValues[NUM_CHANNELS] = {0, 0, 0, 0, 0, 0, 0, 0};
 
@@ -151,7 +123,6 @@
       char tempChars[numChars];
       boolean newData = false;
 
-      // Forward declarations (also keep non-Arduino C++ compilers happy).
       int mapClamped(int value, int inMin, int inMax, int outMin, int outMax);
       int normalizePedal(uint8_t i, int rawValue);
       void updateSourceValues();
@@ -176,14 +147,10 @@
           int normalized = normalizePedal(i, filteredPedalValues[i]);
 
           if (i < 4) {
-            // Match the Max p expression-pedal-values scale objects.
             sourceValues[i] = mapClamped(normalized,
                                          exprInputMin[i], exprInputMax[i],
                                          exprOutputMin[i], exprOutputMax[i]);
           } else {
-            // Match the existing Max split/gate behavior for susped1..4: values in
-            // 0..111 close the gate; values above 111 pass through. When the gate is
-            // closed, the last value is retained by Max's pak objects, so retain it here.
             if (normalized > 111) sourceValues[i] = normalized;
           }
         }
@@ -196,8 +163,6 @@
         pwm.setOscillatorFrequency(27000000);
         pwm.setPWMFreq(SERVO_FREQ);
 
-        // Seed the average buffers from current pedal readings so startup does not
-        // introduce a ramp from zero.
         for (uint8_t i = 0; i < NUM_CHANNELS; i++) {
           int initialValue = analogRead(pedals[i]);
           rawPedalValues[i] = initialValue;
@@ -212,9 +177,6 @@
         }
         updateSourceValues();
 
-        // Initialize only servos that have a valid source in the default mapping.
-        // Source 8 means unmapped: do not send it an arbitrary startup position.
-        // A value of -1 marks a servo whose position has not been commanded yet.
         for (uint8_t i = 0; i < NUM_CHANNELS; i++) {
           uint8_t source = servoSource[i];
           if (source <= 3) {
@@ -273,11 +235,10 @@
           int controlValue;
 
           if (manualMode) {
-            // Manual mode: MIDI knob 1 controls servo 1, etc.
             controlValue = manualValues[i];
           } else {
             uint8_t source = servoSource[i];
-            if (source >= NUM_CHANNELS) continue; // 8 = unmapped; hold current position
+            if (source >= NUM_CHANNELS) continue;
             controlValue = sourceValues[source];
           }
 
@@ -309,7 +270,6 @@
               if (ndx < numChars - 1) {
                 receivedChars[ndx++] = rc;
               } else {
-                // Oversized frame: discard it rather than parsing a truncated command.
                 recvInProgress = false;
                 ndx = 0;
               }
@@ -318,7 +278,7 @@
               recvInProgress = false;
               ndx = 0;
               newData = true;
-              return; // Process one complete frame per loop; preserve queued frames.
+              return;
             }
           } else if (rc == '<') {
             recvInProgress = true;
@@ -333,7 +293,6 @@
 
         long command = atol(token);
 
-        // Mode frame: <997,0> or <997,1>
         if (command == 997) {
           token = strtok(NULL, ",");
           if (token == NULL) return;
@@ -345,7 +304,6 @@
         }
 
         int values[8];
-        // Mapping, calibration, and manual-value frames all carry eight values.
         if (command != 999 && command != 998 && command != 996) return;
 
         for (uint8_t i = 0; i < 8; i++) {
@@ -355,8 +313,6 @@
         }
 
         if (command == 999) {
-          // Only the first four pedals are valid motor-mapping sources. The second
-          // set (pins 8, 10, 12, 14) is reserved for Max-only on/off functions.
           for (uint8_t i = 0; i < NUM_CHANNELS; i++) {
             if (!((values[i] >= 0 && values[i] <= 3) || values[i] == 8)) return;
           }
@@ -380,7 +336,6 @@
             manualValues[i] = values[i];
           }
         }
-        // All other frames (including legacy target-value lists) are ignored.
       }
     </code></pre>
     </p>
@@ -396,7 +351,7 @@
 
     <div class="gap-2"></div>
 
-    <p style="text-align: right"><u>write to me if you want the max patch!</u></p>
+    <p style="text-align: right"><u>write to me if you want the full max patch!</u></p>
 
     <div class="gap-2"></div>
 
